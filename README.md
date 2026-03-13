@@ -9,7 +9,7 @@ Emma Penn, Janina Kurowski, Tessa Joseph
 
 ## Project Overview
 
-This project investigates **healthcare access, treatment, and outcomes for women with reproductive system disorders** — with a focus on endometriosis and related autoimmune conditions — through the lens of Medicare claims and inpatient discharge data.
+This project investigates **healthcare access, treatment, and outcomes for women with reproductive system disorders** with a focus on endometriosis and related autoimmune conditions through the lens of Medicare claims and inpatient discharge data.
 
 Our central questions:
 - Are there significant trends over time in Medicare inpatient discharges related to female reproductive system disorders?

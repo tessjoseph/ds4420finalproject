@@ -3,17 +3,9 @@
 
 **GitHub Repository:** https://github.com/tessjoseph/ds4420finalproject.git
 
----
-
 ## Group Members
 
-| Name |
-|------|
-| Emma Penn |
-| Janina Kurowski |
-| Tessa Joseph |
-
----
+Emma Penn, Janina Kurowski, Tessa Joseph
 
 ## Project Overview
 

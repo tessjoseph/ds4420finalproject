@@ -16,7 +16,7 @@ Our central questions:
 - Do certain insurance plans or coverage structures produce better health outcomes for women with conditions like endometriosis?
 - Which treatments are most frequently denied, and how does coverage variation relate to diagnosis and discharge patterns?
 
-We apply **three machine learning methods** — at least one in Python, at least one in R — with at least one Bayesian model, per course requirements. At least one method is implemented manually without pre-built modeling packages.
+We apply **three machine learning methods** with at least one Bayesian model. At least one method is implemented manually without pre-built modeling packages.
 
 ---
 

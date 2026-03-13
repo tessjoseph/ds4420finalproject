@@ -77,13 +77,12 @@ jupyter notebook POC_timeseries.ipynb
 
 ## Planned Phase II Models
 
-| Model | Method | Language | Notes |
-|-------|--------|----------|-------|
-| TBD (time series extension or reframed access model) | Time Series / Regression | Python | To be finalized at March 23 check-in |
-| Bayesian Model | Bayesian Classification or Regression | R | Manual implementation; no pyMC/rstan |
-| TBD | TBD | Python or R | Third model for group of three |
+| Model | Method | Language | 
+|-------|--------|----------|
+| TBD (time series extension or reframed access model) | Time Series / Regression | Python | 
+| Bayesian Model | Bayesian Classification or Regression | R |
+| TBD | TBD | Python or R |
 
-*All models will be finalized and fully documented in the Phase II submission (due April 16).*
 
 ---
 

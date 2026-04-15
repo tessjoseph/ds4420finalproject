@@ -172,7 +172,7 @@ acf(ar_residuals, na.action = na.pass, main = "Autocorrelation of Residuals")
 # Time series plot
 png("lupron_spending_over_time.png", width = 1600, height = 900, res = 150)
 
-par(mar = c(9, 4, 3, 1), mgp = c(5, 1.5, 0))
+par(mar = c(9, 7, 3, 1), mgp = c(5, 1.5, 0))
 plot(spending_data$Spending,
      type = "l",
      lwd = 2,
@@ -201,7 +201,7 @@ dev.off()
 # Actual versus predicted plot
 png("lupron_actual_vs_predicted.png", width = 1400, height = 800, res = 150)
 
-par(mar = c(9, 4, 3, 1), mgp = c(5, 1.5, 0))
+par(mar = c(9, 7, 3, 1), mgp = c(5, 1.5, 0))
 plot(1:length(y_test), y_test,
      type = "l",
      lwd = 2,

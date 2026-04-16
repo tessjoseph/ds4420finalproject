@@ -1,0 +1,155 @@
+library(readr)
+
+# Read and combine the yearly data files
+
+
+```{r} 
+library(readr)
+year_and_quarter = c()
+measurement = c()
+
+
+
+
+
+```
+
+```{r}
+
+
+data_folder = "DS 4420/Time Series Analysis Data"
+file_list = list.files(path = data_folder,
+                        pattern = "\\.csv$",
+                        full.names = TRUE)
+file_list = sort(file_list)
+
+
+for (file in file_list) {
+  current_df <- read_csv(file, show_col_types = FALSE)
+  
+  current_df <- na.omit(current_df)
+  current_df$`Medicaid Amount Reimbursed` <- as.numeric(current_df$`Medicaid Amount Reimbursed`)
+  current_df <- current_df[current_df$`Product Name` %in% c("LUPRON DEPOT", "LUPRON DEP"), ]
+  
+  quarter_values <- sort(unique(current_df$Quarter))
+  
+  split_file <- strsplit(basename(file), "-")[[1]]
+  year <- gsub("\\.csv$", "", split_file[2])
+  
+  for (q in quarter_values) {
+    quarter_df <- current_df[current_df$Quarter == q, ]
+    total_reimbursed <- sum(quarter_df$`Medicaid Amount Reimbursed`, na.rm = TRUE)
+    
+    year_and_quarter <- c(year_and_quarter, paste0(year, "Q", q))
+    measurement <- c(measurement, total_reimbursed)
+    
+  }
+  print(year)
+}
+
+
+```
+
+
+
+```{r}
+spending_data <- data.frame(Date = year_and_quarter, Spending = measurement)
+head(spending_data)
+
+# Visualize the time series
+try(dev.off(), silent = TRUE)
+
+
+
+plot(spending_data$Spending,
+     type = "l",
+     xlab = "Quarter",
+     ylab = "Medicaid Amount Reimbursed",
+     main = "Lupron Spending Over Time",
+     xaxt = "n")
+
+axis(1,
+     at = seq(1, length(spending_data$Date), by = 4),
+     labels = spending_data$Date[seq(1, length(spending_data$Date), by = 4)],
+     las = 2,
+     cex.axis = 0.8)
+
+
+
+``` 
+
+
+
+
+```{r} 
+acf(spending_data$Spending, main = "Lupron Spending ACF Plot")
+pacf(spending_data$Spending, main = "Lupron Spending PACF Plot")
+
+
+```
+
+
+
+
+```{r} 
+train_size <- round(0.8 * nrow(spending_data))
+train_data <- spending_data[1:train_size, ]
+test_data <- spending_data[(train_size + 1):nrow(spending_data), ]
+
+y_train <- train_data$Spending
+y_test <- test_data$Spending
+
+
+results <- arima(y_train, order=c(2, 1, 0))
+
+
+
+
+```
+
+
+# range based values
+```{r} 
+ranges_1 = test_data$Spending
+
+ranges_2 = pred_data$pred
+
+
+
+```
+
+
+
+```{r} 
+
+y_pred <- predict(results, n.ahead = length(y_test))
+
+
+pred_data <- data.frame(Date = test_data$Date, pred = y_pred$pred)
+
+
+
+plot(1:length(y_test), y_test,
+     type = "l",
+     col = "blue",
+     lwd = 2,
+     xlab = "Test Quarter",
+     ylab = "Medicaid Amount Reimbursed",
+     ylim = range(c(test_data$Spending, pred_data$pred)),
+     main = "AR(2) Model Predictions",
+     xaxt = "n") 
+
+lines(1:length(y_test), y_pred$pred,
+      col = "red",
+      lwd = 2,
+      lty = 2)
+
+legend("topleft",
+       legend = c("Actual Spending", "AR(2) Predicted Spending"),
+       col = c("blue", "red"),
+       lty = c(1, 2),
+       bty = "n")
+
+
+mae <- mean(abs(y_test - pred_data$pred))
+```

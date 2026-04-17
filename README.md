@@ -7,101 +7,179 @@
 
 Emma Penn, Janina Kurowski, Tessa Joseph
 
+## Machine Learning Analysis of Women’s Reproductive Health Outcomes in Government-funded Health Insurance Programs
+
 ## Project Overview
 
-This project investigates **healthcare access, treatment, and outcomes for women with reproductive system disorders** with a focus on endometriosis and related autoimmune conditions through the lens of Medicare claims and inpatient discharge data.
+This project investigates **women’s reproductive health outcomes in government-funded health insurance programs** using Medicare and Medicaid administrative data. Our work focuses on endometriosis-related treatment patterns and female reproductive system utilization, with particular attention to Lupron Depot spending, prescribing, and downstream healthcare use.
 
 Our central questions:
-- Are there significant trends over time in Medicare inpatient discharges related to female reproductive system disorders?
-- Do certain insurance plans or coverage structures produce better health outcomes for women with conditions like endometriosis?
-- Which treatments are most frequently denied, and how does coverage variation relate to diagnosis and discharge patterns?
+- How has quarterly Medicaid spending on Lupron Depot changed over time, and how well can a time series model capture that trajectory?
+- Did Lupron prescription counts increase across states, and how much state to state variation exists in those trends?
+- Can state level provider, hospital, and Medicare payment features help predict inpatient and outpatient utilization related to female reproductive system disorders?
 
 We apply **three machine learning methods** with at least one Bayesian model. At least one method is implemented manually without pre-built modeling packages.
 
 ---
 
-## Phase I: Proof-of-Concept — Time Series Analysis of Medicare Discharges
+## Time Series Analysis of Medicaid Lupron Spending
 
-Our project will explore whether there are significant trends over time in the number of inpatient hospital discharges related to female reproductive system disorders among Medicare beneficiaries. Understanding these trends in time series data will be a step towards the Phase II question of whether coverage structures and plan types are associated with different health outcomes for women with conditions like endometriosis.
+The time series was built by aggregating Lupron-related Medicaid reimbursement amounts by quarter. This created a long historical series that let us evaluate how spending changed over time and whether recent values could be forecast from earlier quarters.
 
 ### Dataset
 
-**Medicare Inpatient Hospitals — by Geography and Service**
+**CMS State Drug Utilization Data**
 - **Source:** Centers for Medicare & Medicaid Services (CMS)
-- **URL:** https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals/medicare-inpatient-hospitals-by-geography-and-service
-- **Coverage:** National Medicare Part A inpatient discharge summaries, aggregated by geography and DRG (Diagnosis-Related Group) service code
-- **Relevant subset:** DRG codes corresponding to female reproductive system disorders, aggregated nationally by year
+- **Relevant subset:** Lupron Depot reimbursement amounts aggregated by quarter
+- **Time coverage:** Quarterly observations from 1998 to 2025
 
-The dataset used for this analysis is the Medicare Inpatient Hospitals by Geography and Service dataset, published by the Centers for Medicare & Medicaid Services (CMS). It contains national Medicare Part A inpatient discharge summaries aggregated by geography and DRG (Diagnosis-Related Group) service code, capturing hospital utilization patterns across the United States. For this proof-of-concept, we filtered the data to DRG codes corresponding to female reproductive system disorders and aggregated discharge counts at the national level by year. While the dataset is comprehensive in scope, it is not updated on a quarterly basis, which limits the number of usable time points for longitudinal modeling. The available data runs through 2013 in its historical aggregate form, constraining our ability to build a robust time series model on this subset alone. Future iterations of this analysis will explore whether more recent CMS data exists to extend the series, or whether an alternative framing using service-level coverage data better supports the modeling approach.
+### Methods
 
-### Methods (Phase I)
-
-Exploratory **time series analysis** in Python to assess whether discharge counts over available years show a statistically meaningful trend.
+Exploratory **time series analysis in R** followed by ARIMA modeling.
 
 Key steps:
-1. Filtered CMS dataset to DRG codes for female reproductive system disorders (menstrual and other female reproductive system disorders, with and without CC/MCC)
-2. Aggregated national discharge counts by year
-3. Plotted the raw time series
-4. Examined the **ACF (Autocorrelation Function)** plot to assess stationarity and autocorrelation structure
+1. Combined quarterly Medicaid reimbursement data across years
+2. Plotted the raw time series
+3. Examined the **ACF** and **PACF** plots to assess lag structure and nonstationarity
+4. Fit and compared autoregressive style models with differencing
+5. Evaluated predictions with residual diagnostics and mean absolute error
 
-### Phase I Findings & Limitations
+### Findings and Limitations
 
-The initial time series plot shows a clear downward trend in total discharges from roughly 2,400 at the start of the series down to approximately 1,600, with a slight uptick in the final observed years. The ACF plot shows high autocorrelation at lag 1 that decays gradually without a sharp cutoff, which is characteristic of a non-stationary series rather than a clean AR or MA process. Both DRG subsets (with and without CC/MCC) exhibit nearly identical autocorrelation structure. The slow decay in the ACF suggests the series may be better described by a random walk or trend-stationary process, but with only ~11 time points the series is too short to fit and validate a meaningful ARIMA model.
+The final model was **ARIMA(2, 2, 0)**. The series showed a strong long-term upward trend in Lupron spending, but also increasing variability in later years. The model captured the overall direction of spending growth, though it still struggled with volatility and nonstationarity.
 
-Key limitations:
-- The data is **not updated quarterly**, limiting the number of usable time points
-- Available aggregate data runs only through 2013, which is insufficient for a robust long-horizon time series
-- The signal for reproductive disorder discharges may be too sparse at the national aggregate level to model with confidence
+Key takeaway:
+- Medicaid reimbursement for Lupron increased substantially over time
 
-### Planned Pivot for Phase II
+Key limitation:
+- Even after differencing, the series was still difficult to forecast precisely because spending behavior became more variable in later years
 
-We are evaluating two directions based on Phase I findings:
+### Running the Time Series Code
 
-1. **Data extension:** Identify whether more recent CMS inpatient data (post-2013) exists to extend the time series to a usable length
-2. **Question reframing:** Shift toward modeling how Medicare-covered services related to female reproductive health (e.g., specific treatment types, coverage of endometriosis-related procedures) predict or explain discharge volume and outcomes — connecting more directly to the access and equity framing of our literature review
+**Requirements:** R, `readr`, `rmarkdown`
 
-Additional datasets under consideration for Phase II:
-- [Health Care Cost Institute (HCCI)](https://healthcostinstitute.org/) — commercial claims data for cross-payer comparison
-- UTHealth Endometriosis MRI Dataset (UT-EndoMRI) — for potential imaging-based modeling
-
-### Running the Phase I Code
-
-**Requirements:** Python 3.x, `pandas`, `matplotlib`, `statsmodels`, `os`
-
-```bash
-cd phase1/
-jupyter notebook POC_timeseries.ipynb
+```r
+install.packages(c("readr", "rmarkdown"))
+rmarkdown::render("ARIMA_model_AR2_differencing1.Rmd")
 ```
 
 ---
 
-## Planned Phase II Models
+## Bayesian Poisson Regression of State Level Lupron Prescriptions
 
-| Model | Method | Language | 
+Our second analysis studies whether **Lupron prescription counts changed over time across states**. This model shifts from spending to prescribing behavior, allowing us to assess both a national pattern and state-level variation.
+
+### Dataset
+
+**CMS State Drug Utilization Data**
+- **Source:** Centers for Medicare & Medicaid Services (CMS)
+- **Relevant subset:** Annual Lupron prescription totals by state
+- **Time coverage:** 2009 to 2024
+
+The Bayesian dataset was built by aggregating annual Lupron prescription counts across states. Suppressed rows and unknown state codes were removed before modeling.
+
+### Methods
+
+A **Bayesian Poisson regression model in Python** with state specific intercepts and slopes.
+
+Key steps:
+1. Filtered Lupron prescription records and aggregated them to the state year level
+2. Centered the year variable to improve interpretation
+3. Modeled annual prescription counts with a Poisson likelihood
+4. Placed Normal priors on state intercepts and state slopes
+5. Used a **manual Metropolis-Hastings sampler** to approximate the posterior
+6. Summarized posterior means, posterior standard deviations, and interval estimates across states
+
+### Findings & Limitations
+
+The model found evidence of a **positive national prescribing trend** from 2009 to 2024. The posterior mean for the national average slope, mu_beta, was approximately 0.037, suggesting a modest increase in prescribing over time on the log scale. At the same time, the state-level estimates showed meaningful geographic variation, with some states increasing faster than others, and a smaller number declining.
+
+Key takeaway:
+- Lupron prescribing generally increased over time across states in the Medicaid data
+
+Key limitations:
+- The prescription counts showed substantial dispersion, which makes the Poisson assumption imperfect
+- The Metropolis-Hastings sampler had a low acceptance rate, so the model should be interpreted as exploratory rather than fully optimized
+
+### Running the Bayesian Code
+
+**Requirements:** Python 3.x, `numpy`, `pandas`, `matplotlib`, `scipy`, `jupyter`
+
+```bash
+pip install numpy pandas matplotlib scipy notebook jupyter
+jupyter notebook "PoissonBayesian.ipynb"
+```
+
+___
+
+## Neural Network Analysis of State Level Utilization
+
+Our third analysis asks whether **state level healthcare system characteristics can predict utilization related to female reproductive system disorders**. This model focuses on downstream use of care rather than spending or prescribing alone.
+
+### Dataset
+
+A merged **state level utilization dataset** built from multiple CMS sources:
+- Medicare inpatient utilization data
+- Medicare outpatient utilization data
+- Hospital counts and provider counts
+- Medicare payment features
+
+Each row represented one state. The outcome variable was total utilization, defined as the sum of selected inpatient discharges and outpatient utilization for female reproductive system disorders in 2023.
+
+### Methods
+
+A **manually implemented neural network regression model in Python**.
+
+Key steps:
+1. Merged state level features with utilization targets
+2. Cleaned numeric variables and filled missing predictor values with medians
+3. Standardized predictors using training set statistics
+4. Standardized the target during training and transformed predictions back to the original scale for interpretation
+5. Fit a multilayer perceptron with one hidden layer, one hidden node, ReLU activation, and a linear output layer
+6. Used gradient descent with L2 regularization
+7. Used **leave-one-out cross-validation** to compare random seeds and select the final initialization
+
+### Findings and Limitations
+
+Earlier versions of the neural network underfit the data and predicted within a too-narrow range. After tuning the learning rate, including bias terms, and using leave-one-out cross-validation, the final model performed much better than a simple baseline that predicted the training set mean.
+
+Key takeaway:
+- State level provider, hospital, and Medicare payment features contained useful predictive signal for reproductive health utilization
+
+Key limitation:
+- The dataset was very small because each observation represented a state, so the model remains exploratory and sensitive to initialization choices
+
+### Running the Neural Network Code
+
+**Requirements:** Python 3.x, `numpy`, `pandas`, `matplotlib`, `jupyter`
+
+```bash
+pip install numpy pandas matplotlib notebook jupyter
+jupyter notebook "Neural Network.ipynb"
+```
+
+---
+
+## Final Project Models
+
+| Model | Method | Language |
 |-------|--------|----------|
-| TBD (time series extension or reframed access model) | Time Series / Regression | Python | 
-| Bayesian Model | Bayesian Classification or Regression | R |
-| TBD | TBD | Python or R |
-
+| ARIMA(2, 2, 0) | Time Series | R |
+| Bayesian Poisson regression with state specific intercepts and slopes | Bayesian Modeling | Python |
+| One hidden layer multilayer perceptron | Neural Network | Python |
 
 ---
 
 ## Literature Review Summary
 
-Our literature review examines prior work on disparities in endometriosis diagnosis and treatment, healthcare access inequities for women with reproductive disorders, and the use of ML methods in analyzing Medicare claims and diagnostic patterns. Full review available in `phase1/literature_review.pdf`.
+Our literature review examines prior work on disparities in endometriosis diagnosis and treatment, healthcare access inequities in women’s reproductive health, and machine learning approaches for analyzing related clinical and administrative data. The final project builds on that literature by shifting attention toward government-funded insurance measures of spending, prescribing, and utilization rather than imaging-based diagnosis alone.
 
 **Selected Works:**
 
-Westwood, Shannon, Mackenzie Fannin, Fadumo Ali, Justice Thigpen, Rachel Tatro, Amanda Hernandez, Cadynce Peltzer, et al. "Disparities in women with endometriosis regarding access to care, diagnosis, treatment, and management in the United States: a scoping review." *Cureus* 15, no. 5 (2023).
+Westwood, Shannon, Mackenzie Fannin, Fadumo Ali, Justice Thigpen, Rachel Tatro, Amanda Hernandez, Cadynce Peltzer, et al. “Disparities in women with endometriosis regarding access to care, diagnosis, treatment, and management in the United States: a scoping review.” *Cureus* 15, no. 5 (2023).
 
-*Additional references available in the full literature review PDF, including work on diagnostic error in endometriosis (BMJ Open Quality) and Medicare diagnosis severity group time series modeling.*
+Bontempo, Allyson C., and Gordon D. Schiff. “Diagnosing Diagnostic Error of Endometriosis: A Secondary Analysis of Patient Experiences from a Mixed Methods Survey.” *BMJ Open Quality* 14, no. 1 (2025).
 
----
+Xing, et al. Research on the UT EndoMRI dataset and deep learning based endometriosis imaging tasks.
 
-## Full Citations
-
-**Primary Dataset:**
-Centers for Medicare & Medicaid Services. *Medicare Inpatient Hospitals - by Geography and Service*. Centers for Medicare & Medicaid Services. Published May 14, 2025; last modified May 22, 2025. Dataset. https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals/medicare-inpatient-hospitals-by-geography-and-service
-
-**Documentation:**
-Python Software Foundation. *os — Miscellaneous operating system interfaces*. Python Software Foundation. Last modified March 13, 2026. https://docs.python.org/3/library/os.html
+*Additional references available in the full report PDF, including work on diagnostic error in endometriosis (BMJ Open Quality) and Medicare diagnosis severity group time series modeling.*

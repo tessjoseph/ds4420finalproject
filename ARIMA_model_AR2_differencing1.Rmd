@@ -1,4 +1,4 @@
-library(readr)
+
 
 # Read and combine the yearly data files
 
@@ -25,6 +25,7 @@ file_list = sort(file_list)
 
 
 for (file in file_list) {
+ ]
   current_df <- read_csv(file, show_col_types = FALSE)
   
   current_df <- na.omit(current_df)
@@ -48,7 +49,9 @@ for (file in file_list) {
 }
 
 
+
 ```
+
 
 
 
@@ -63,16 +66,15 @@ try(dev.off(), silent = TRUE)
 
 plot(spending_data$Spending,
      type = "l",
-     xlab = "Quarter",
+     xlab = "Quarterly spending from 98 Q1 - 2025 Q3",
      ylab = "Medicaid Amount Reimbursed",
-     main = "Lupron Spending Over Time",
-     xaxt = "n")
+     main = "Lupron Spending Over Time")
 
-axis(1,
-     at = seq(1, length(spending_data$Date), by = 4),
-     labels = spending_data$Date[seq(1, length(spending_data$Date), by = 4)],
-     las = 2,
-     cex.axis = 0.8)
+#axis(1,
+  #   at = seq(1, length(spending_data$Date), by = 4),
+  #   labels = spending_data$Date[seq(1, length(spending_data$Date), by = 4)],
+  #   las = 2,
+  #   cex.axis = 0.8)
 
 
 
@@ -100,7 +102,7 @@ y_train <- train_data$Spending
 y_test <- test_data$Spending
 
 
-results <- arima(y_train, order=c(2, 1, 0))
+results <- arima(y_train, order=c(2, 2, 0))
 
 
 
